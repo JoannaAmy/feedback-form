@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { format } from "date-fns";
 import "./index.css";
 
@@ -7,7 +7,10 @@ export default function FeedbackForm() {
   const [text, setText] = useState("");
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [feedbackEntries, setFeedbackEntries] = useState([]);
+  const [feedbackEntries, setFeedbackEntries] = useState(() => {
+    const savedFeedbacks = localStorage.getItem("feedbackEntries");
+    return savedFeedbacks ? JSON.parse(savedFeedbacks) : [];
+  });
 
   const ratingDescription = {
     1: "Poor",
@@ -17,20 +20,16 @@ export default function FeedbackForm() {
     5: "Excellent",
   };
 
-  useEffect(() => {
-    const savedFeedbacks = localStorage.getItem("feedbackEntries");
-    if (savedFeedbacks) {
-      setFeedbackEntries(JSON.parse(savedFeedbacks));
-    }
-  }, []);
+  useEffect(() => {}, []);
 
-  const averageRating =
-    feedbackEntries.length > 0
+  const averageRating = useMemo(() => {
+    return feedbackEntries.length > 0
       ? (
           feedbackEntries.reduce((sum, entry) => sum + entry.rating, 0) /
           feedbackEntries.length
         ).toFixed(1)
       : 0;
+  }, [feedbackEntries]);
 
   function handleRating(value) {
     setRating(value);
@@ -158,29 +157,30 @@ export default function FeedbackForm() {
                 {feedbackEntries.map((item) => (
                   <li key={item.id} className="entries">
                     <div className="entry-content">
-                    <span>
-                      Rating: {item.rating}
-                      <span style={{color:'yellow', fontSize: '17px'}}> ★</span> <br />
-                      {ratingDescription[item.rating]}
-                    </span>
+                      <span>
+                        Rating: {item.rating}
+                        <span style={{ color: "yellow", fontSize: "17px" }}>
+                          {" "}
+                          ★
+                        </span>{" "}
+                        <br />
+                        {ratingDescription[item.rating]}
+                      </span>
 
-                    <span className="comment"
-                    >
-                      Comment: {item.comment}
-                    </span>
-                    <br />
+                      <span className="comment">Comment: {item.comment}</span>
+                      <br />
 
-                    <span>{item.date}</span>
-                    <span
-                      className="delete"
-                      onClick={() => handleDeleteEntry(item.id)}
-                      style={{
-                        fontSize: "15px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      🗑️
-                    </span>
+                      <span>{item.date}</span>
+                      <span
+                        className="delete"
+                        onClick={() => handleDeleteEntry(item.id)}
+                        style={{
+                          fontSize: "15px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        🗑️
+                      </span>
                     </div>
                   </li>
                 ))}
